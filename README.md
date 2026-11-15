@@ -1,2 +1,2 @@
-# -ai-bot
+# -ai-bot.
 AI bot
