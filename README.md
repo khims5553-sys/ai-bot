@@ -1,2 +1,2 @@
-# nse-ai-bot
-NSE AI bot
+# -ai-bot
+AI bot
