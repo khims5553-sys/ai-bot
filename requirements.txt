@@ -4,3 +4,4 @@ numpy
 requests
 streamlit>=1.37
 plotly
+scikit-learn
