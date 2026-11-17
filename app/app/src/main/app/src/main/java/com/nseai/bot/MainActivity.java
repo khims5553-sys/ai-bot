@@ -1,15 +1,9 @@
 package com.nseai.bot;
 
 import android.app.Activity;
-import android.content.Intent;
-import android.graphics.Color;
-import android.net.Uri;
 import android.os.Bundle;
-import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.CookieManager;
-import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
@@ -23,201 +17,170 @@ import android.widget.TextView;
 public class MainActivity extends Activity {
 
     private static final String APP_URL = "https://dashboardpy-fxqfhb5xeacbtk4vue38j2.streamlit.app";
-
-    private WebView web;
-    private ProgressBar progress;
-    private LinearLayout errorPanel;
-    private TextView errorMessage;
+    private WebView webView;
+    private LinearLayout rootLayout;
+    private ProgressBar progressBar;
+    private LinearLayout errorLayout;
+    private TextView errorText;
+    private Button retryButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        try {
-            createScreen();
-            configureWebView();
-            loadApp();
-        } catch (Exception e) {
-            showError("App start nahi ho paya: " + safeMessage(e));
-        }
-    }
+        rootLayout = new LinearLayout(this);
+        rootLayout.setOrientation(LinearLayout.VERTICAL);
+        rootLayout.setLayoutParams(new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        ));
 
-    private void createScreen() {
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(Color.WHITE);
+        progressBar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        progressBar.setIndeterminate(true);
+        progressBar.setVisibility(View.VISIBLE);
+        LinearLayout.LayoutParams progressParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                8
+        );
+        rootLayout.addView(progressBar, progressParams);
 
-        progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
-        progress.setIndeterminate(false);
-        root.addView(progress, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(4)));
+        webView = new WebView(this);
+        webView.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        ));
 
-        web = new WebView(this);
-        root.addView(web, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
-
-        errorPanel = new LinearLayout(this);
-        errorPanel.setOrientation(LinearLayout.VERTICAL);
-        errorPanel.setGravity(Gravity.CENTER);
-        errorPanel.setPadding(dp(24), dp(24), dp(24), dp(24));
-        errorPanel.setVisibility(View.GONE);
-
-        TextView heading = new TextView(this);
-        heading.setText("Page load nahi ho paya");
-        heading.setTextColor(Color.BLACK);
-        heading.setTextSize(20);
-        errorPanel.addView(heading);
-
-        errorMessage = new TextView(this);
-        errorMessage.setTextColor(Color.DKGRAY);
-        errorMessage.setTextSize(15);
-        errorMessage.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams messageParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        messageParams.topMargin = dp(12);
-        errorPanel.addView(errorMessage, messageParams);
-
-        Button retry = new Button(this);
-        retry.setText("Dobara koshish karein");
-        retry.setOnClickListener(v -> loadApp());
-        LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        buttonParams.topMargin = dp(16);
-        errorPanel.addView(retry, buttonParams);
-
-        root.addView(errorPanel, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
-        setContentView(root);
-    }
-
-    private void configureWebView() {
-        WebSettings settings = web.getSettings();
+        WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
-        settings.setJavaScriptCanOpenWindowsAutomatically(false);
-        settings.setSupportMultipleWindows(false);
-        settings.setLoadsImagesAutomatically(true);
+        settings.setDatabaseEnabled(true);
+        settings.setSupportZoom(true);
+        settings.setBuiltInZoomControls(true);
+        settings.setDisplayZoomControls(false);
+        settings.setAllowFileAccess(false);
+        settings.setAllowContentAccess(false);
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
 
-        CookieManager cookies = CookieManager.getInstance();
-        cookies.setAcceptCookie(true);
-        cookies.setAccept第三方Cookies(web);
-
-        web.setWebChromeClient(new WebChromeClient() {
-            @Override
-            public void onProgressChanged(WebView view, int newProgress) {
-                progress.setProgress(newProgress);
-                progress.setVisibility(newProgress >= 100 ? View.GONE : View.VISIBLE);
-            }
-        });
-
-        web.setWebViewClient(new WebViewClient() {
+        webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                return handleUrl(request.getUrl());
-            }
-
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                return handleUrl(Uri.parse(url));
+                return false;
             }
 
             @Override
             public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
-                errorPanel.setVisibility(View.GONE);
-                web.setVisibility(View.VISIBLE);
-                progress.setVisibility(View.VISIBLE);
-                progress.setProgress(0);
+                super.onPageStarted(view, url, favicon);
+                if (progressBar != null) {
+                    progressBar.setVisibility(View.VISIBLE);
+                }
             }
 
             @Override
             public void onPageFinished(WebView view, String url) {
-                progress.setVisibility(View.GONE);
+                super.onPageFinished(view, url);
+                if (progressBar != null) {
+                    progressBar.setVisibility(View.GONE);
+                }
             }
 
             @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 if (request != null && request.isForMainFrame()) {
-                    String description = error == null ? "Network error" : error.getDescription().toString();
-                    showError("Internet connection check karein aur phir retry karein.\n" + description);
+                    String msg = (error != null && error.getDescription() != null)
+                            ? error.getDescription().toString()
+                            : "Network or loading error";
+                    showErrorScreen("Page failed to load", msg);
                 }
             }
 
             @Override
-            public void onReceivedHttpError(WebView view, WebResourceRequest request,
-                                            android.webkit.WebResourceResponse response) {
-                if (request != null && request.isForMainFrame() && response != null
-                        && response.getStatusCode() >= 400) {
-                    showError("Website ne error diya (HTTP " + response.getStatusCode()
-                            + "). Thodi der baad retry karein.");
+            public void onReceivedHttpError(WebView view, WebResourceRequest request, android.webkit.WebResourceResponse errorResponse) {
+                if (request != null && request.isForMainFrame()) {
+                    String msg = "HTTP error while loading page";
+                    if (errorResponse != null) {
+                        msg += " (" + errorResponse.getStatusCode() + ")";
+                    }
+                    showErrorScreen("Server error", msg);
                 }
+            }
+
+            @Override
+            public void onReceivedSslError(WebView view, android.webkit.SslErrorHandler handler, android.net.http.SslError error) {
+                showErrorScreen("SSL certificate error", "Secure connection failed. Please try again.");
+                handler.cancel();
+            }
+        });
+
+        rootLayout.addView(webView);
+
+        setContentView(rootLayout);
+        loadApp();
+    }
+
+    private void loadApp() {
+        try {
+            if (webView != null) {
+                webView.loadUrl(APP_URL);
+            }
+        } catch (Exception e) {
+            showErrorScreen("App crash", "Unable to load app: " + e.getMessage());
+        }
+    }
+
+    private void showErrorScreen(String title, String message) {
+        runOnUiThread(() -> {
+            if (webView != null && webView.getParent() != null) {
+                ((ViewGroup) webView.getParent()).removeView(webView);
+            }
+
+            if (errorLayout == null) {
+                errorLayout = new LinearLayout(this);
+                errorLayout.setOrientation(LinearLayout.VERTICAL);
+                errorLayout.setPadding(32, 64, 32, 64);
+                errorLayout.setBackgroundColor(0xFF111827);
+
+                TextView titleText = new TextView(this);
+                titleText.setTextSize(28);
+                titleText.setTextColor(0xFFFFFFFF);
+                titleText.setPadding(0, 0, 0, 16);
+
+                errorText = new TextView(this);
+                errorText.setTextSize(18);
+                errorText.setTextColor(0xFFFFFFFF);
+
+                retryButton = new Button(this);
+                retryButton.setText("Retry");
+                retryButton.setTextSize(18);
+                retryButton.setOnClickListener(v -> {
+                    if (errorLayout.getParent() != null) {
+                        ((ViewGroup) errorLayout.getParent()).removeView(errorLayout);
+                    }
+                    rootLayout.addView(webView);
+                    loadApp();
+                });
+
+                errorLayout.addView(titleText);
+                errorLayout.addView(errorText);
+                errorLayout.addView(retryButton);
+            }
+
+            TextView titleView = (TextView) errorLayout.getChildAt(0);
+            titleView.setText(title);
+
+            errorText.setText(message);
+
+            if (errorLayout.getParent() == null) {
+                rootLayout.addView(errorLayout);
             }
         });
     }
 
-    private boolean handleUrl(Uri uri) {
-        String scheme = uri.getScheme();
-        if ("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme)) {
-            return false;
-        }
-
-        try {
-            startActivity(new Intent(Intent.ACTION_VIEW, uri));
-        } catch (Exception ignored) {
-            // No app on the device can handle this link.
-        }
-        return true;
-    }
-
-    private void loadApp() {
-        if (web == null) {
-            showError("WebView initialize nahi ho paya.");
-            return;
-        }
-        errorPanel.setVisibility(View.GONE);
-        web.setVisibility(View.VISIBLE);
-        progress.setVisibility(View.VISIBLE);
-        progress.setProgress(0);
-        web.loadUrl(APP_URL);
-    }
-
-    private void showError(String message) {
-        if (errorMessage != null && errorPanel != null) {
-            errorMessage.setText(message);
-            web.setVisibility(View.GONE);
-            progress.setVisibility(View.GONE);
-            errorPanel.setVisibility(View.VISIBLE);
-        }
-    }
-
-    private String safeMessage(Exception exception) {
-        String message = exception.getMessage();
-        return message == null || message.trim().isEmpty()
-                ? exception.getClass().getSimpleName() : message;
-    }
-
-    private int dp(int value) {
-        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
-    }
-
     @Override
     public void onBackPressed() {
-        if (web != null && web.canGoBack()) {
-            web.goBack();
+        if (webView != null && webView.canGoBack()) {
+            webView.goBack();
         } else {
             super.onBackPressed();
         }
-    }
-
-    @Override
-    protected void onDestroy() {
-        if (web != null) {
-            web.stopLoading();
-            web.setWebChromeClient(null);
-            web.setWebViewClient(null);
-            web.destroy();
-            web = null;
-        }
-        super.onDestroy();
     }
 }
