@@ -1,4 +1,4 @@
-    ( page_title="Sam AI ",
+    (
     page_icon="🤖",
     layout="wide"
 )
