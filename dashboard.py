@@ -1,11 +1,4 @@
-col_logo, col_title = st.columns([1, 5])
 
-with col_logo:
-    st.image("logo.png", width=90)
-
-with col_title:
-    st.title("Sam AI Bot")
-    st.caption("NIFTY — AI Analysis")
 """
 NSE AI Dashboard (Streamlit)
 Run:  streamlit run dashboard.py
