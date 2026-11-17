@@ -1,8 +1,3 @@
-    
-    page_icon="🤖",
-    layout="wide"
-)
-
 col_logo, col_title = st.columns([1, 5])
 
 with col_logo:
