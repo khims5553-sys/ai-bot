@@ -1,4 +1,4 @@
-st_set_page_config(
+set_page_config(
     page_title="Sam AI Bot",
     page_icon="🤖",
     layout="wide"
