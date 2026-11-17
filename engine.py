@@ -159,6 +159,7 @@ def predict_latest(df, glob=None, h=1):
     return float(m.predict_proba(last)[:, 1][0])
 
 
+
 def decide(p, rep, hi=0.58, lo=0.42):
     pct = int(round(p * 100))
     if not rep["edge"]:
