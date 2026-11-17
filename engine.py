@@ -160,7 +160,11 @@ def predict_latest(df, glob=None, h=1):
 
 
 def decide(p, rep, hi=0.58, lo=0.42):
+    pct = int(round(p * 100))
     if not rep["edge"]:
-        return "WAIT", "Out-of-sample test me model ka edge pakka nahi nikla, isliye prediction par bharosa mat karo."
+        return "WAIT", "Test me edge pakka nahi nikla. Prediction par bharosa mat karo."
     if p >= hi:
-        return "CALL bias", f"Model ki proba
+        return "CALL bias", "Up-move ki probability " + str(pct) + "% hai."
+    if p <= lo:
+        return "PUT bias", "Up-move ki probability sirf " + str(pct) + "% hai."
+    return "WAIT", "Probability " + str(pct) + "% hai, saaf signal nahi."
