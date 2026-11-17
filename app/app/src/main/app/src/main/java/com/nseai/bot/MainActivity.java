@@ -17,22 +17,52 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
+
         try {
             web = new WebView(this);
-            setContentView(web);
+            web.setLayoutParams(new android.view.ViewGroup.LayoutParams(
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT));
+
             WebSettings s = web.getSettings();
             s.setJavaScriptEnabled(true);
             s.setDomStorageEnabled(true);
+            s.setDatabaseEnabled(true);
+            s.setSupportZoom(true);
+            s.setBuiltInZoomControls(true);
+            s.setDisplayZoomControls(false);
+            s.setAllowFileAccess(false);
+            s.setAllowContentAccess(false);
+            s.setCacheMode(WebSettings.LOAD_DEFAULT);
+
             web.setWebViewClient(new WebViewClient() {
                 @Override
-                public void onReceivedError(WebView v, WebResourceRequest r, WebResourceError e) {
-                    if (r.isForMainFrame()) {
-                        v.loadData("<h3>Page load error</h3><p>" + e.getDescription() + "</p>",
-                                "text/html", "UTF-8");
+                public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                    return false;
+                }
+
+                @Override
+                public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                    if (request != null && request.isForMainFrame()) {
+                        String msg = (error != null && error.getDescription() != null)
+                                ? error.getDescription().toString()
+                                : "Unknown network error";
+
+                        view.loadData(
+                                "<html><body style='font-family:sans-serif;padding:24px;color:#111;'>" +
+                                        "<h3>Page load error</h3>" +
+                                        "<p>" + msg + "</p>" +
+                                        "</body></html>",
+                                "text/html",
+                                "UTF-8"
+                        );
                     }
                 }
             });
+
+            setContentView(web);
             web.loadUrl(APP_URL);
+
         } catch (Throwable t) {
             TextView tv = new TextView(this);
             tv.setText("Error: " + t);
